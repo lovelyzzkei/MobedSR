@@ -6,69 +6,80 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <include
+        layout="@layout/toolbar" />
+
     <ImageView
         android:id="@+id/img_lr"
-        android:layout_width="340dp"
+        android:layout_width="0dp"
         android:layout_height="230dp"
-        android:layout_marginStart="29dp"
-        android:layout_marginTop="51dp"
-        android:layout_marginEnd="54dp"
-        android:layout_marginBottom="33dp"
-        app:layout_constraintBottom_toTopOf="@+id/useGpu"
+        android:layout_marginStart="67dp"
+        android:layout_marginEnd="87dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/img_hr"
+        app:layout_constraintHorizontal_bias="0.435"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.278" />
+        app:layout_constraintVertical_bias="0.37" />
 
     <ImageView
         android:id="@+id/img_hr"
-        android:layout_width="332dp"
-        android:layout_height="235dp"
-        android:layout_marginTop="51dp"
-        android:layout_marginEnd="26dp"
-        android:layout_marginBottom="26dp"
-        app:layout_constraintBottom_toTopOf="@+id/btn_resolution"
+        android:layout_width="333dp"
+        android:layout_height="229dp"
+        android:layout_marginEnd="64dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/img_lr"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.278" />
+        app:layout_constraintVertical_bias="0.373" />
+
+    <TextView
+        android:id="@+id/text_sr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="169dp"
+        android:text="Space for SR image"
+        app:layout_constraintBottom_toBottomOf="@+id/img_hr"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/gpu_status"
+        app:layout_constraintTop_toTopOf="@+id/img_hr"
+        app:layout_constraintVertical_bias="0.495" />
 
     <Switch
         android:id="@+id/useGpu"
         android:layout_width="89dp"
         android:layout_height="31dp"
-        android:layout_marginStart="227dp"
-        android:layout_marginEnd="54dp"
-        android:layout_marginBottom="80dp"
         android:text="GPU"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btn_resolution"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/img_lr" />
+        app:layout_constraintEnd_toEndOf="@+id/img_lr"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/img_lr"
+        app:layout_constraintTop_toBottomOf="@+id/img_lr"
+        app:layout_constraintVertical_bias="0.506" />
 
     <Button
         android:id="@+id/btn_resolution"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="209dp"
-        android:layout_marginBottom="80dp"
+        android:layout_marginEnd="267dp"
         android:text="RESOLUTION"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/useGpu"
         app:layout_constraintTop_toBottomOf="@+id/img_hr" />
 
     <TextView
         android:id="@+id/gpu_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="87dp"
+        android:layout_height="25dp"
         android:text="Disable GPU"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/img_hr"
-        app:layout_constraintHorizontal_bias="0.869"
-        app:layout_constraintStart_toEndOf="@+id/img_lr"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.734" />
+        app:layout_constraintEnd_toStartOf="@+id/btn_resolution"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/useGpu"
+        app:layout_constraintTop_toBottomOf="@+id/include"
+        app:layout_constraintVertical_bias="0.781" />
 
     <Button
         android:id="@+id/btn_lr"
@@ -78,28 +89,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/useGpu"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/img_lr"
-        app:layout_constraintVertical_bias="0.269" />
-
-    <TextView
-        android:id="@+id/text_sr"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Space for SR image"
-        app:layout_constraintBottom_toBottomOf="@+id/img_hr"
-        app:layout_constraintEnd_toStartOf="@+id/img_hr"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/img_hr"
-        app:layout_constraintTop_toTopOf="@+id/img_hr" />
+        app:layout_constraintTop_toBottomOf="@+id/img_lr" />
 
     <TextView
         android:id="@+id/text_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginEnd="224dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.959"
         app:layout_constraintStart_toEndOf="@+id/gpu_status"
         app:layout_constraintTop_toBottomOf="@+id/img_hr"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.147" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

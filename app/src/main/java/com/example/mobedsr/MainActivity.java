@@ -1,5 +1,6 @@
 package com.example.mobedsr;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
@@ -9,6 +10,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -16,6 +19,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -63,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
     private Switch switch_gpu;
     private Button btn_resolution;
     private Button btn_lr_img;
+
+    private Toolbar toolbar;
 
 
     // Used to load the 'mobedsr' library on application startup.
@@ -165,16 +172,56 @@ public class MainActivity extends AppCompatActivity {
     private void setComponentById() {
         decorView = getWindow().getDecorView();
         switch_gpu = findViewById(R.id.useGpu);
+
         text_time = findViewById(R.id.text_time);
         text_gpu = findViewById(R.id.gpu_status);
         text_sr = findViewById(R.id.text_sr);
+
         img_lr = findViewById(R.id.img_lr);
         img_hr = findViewById(R.id.img_hr);
+
         btn_resolution = findViewById(R.id.btn_resolution);
         btn_lr_img = findViewById(R.id.btn_lr);
+
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
     }
 
 
+    /** @brief  Reflect menu resource xml to Appbar
+     *  @date   23/01/26
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar, menu);
+        return true;
+    }
+
+
+    /** @brief  Listener when the toolbar menu clicked
+     *  @date   23/01/26
+     *  @param  item: selected toolbar item
+     */
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        hideSoftKeys(decorView);
+        switch (item.getItemId()) {
+            case R.id.imageSR:
+                startActivity(new Intent(this, MainActivity.class));
+                return true;
+            case R.id.videoSR:
+                startActivity(new Intent(this, VideoSRActivity.class));
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
+    /** @brief  Prepare the input tensor from low resolution image
+     *  @date   23/01/25
+     */
     private TensorImage prepareInputTensor() {
         TensorImage inputImage = TensorImage.fromBitmap(bitmap_lr);
         height = bitmap_lr.getHeight();
@@ -189,6 +236,10 @@ public class MainActivity extends AppCompatActivity {
         return inputImage;
     }
 
+
+    /** @brief  Prepare the output tensor for super resolution
+     *  @date   23/01/25
+     */
     private TensorImage prepareOutputTensor() {
         TensorImage srImage = new TensorImage(DataType.FLOAT32);
         int[] srShape = new int[]{1080, 1920, 3};
@@ -198,6 +249,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /** @brief  Convert tensor to bitmap image
+     *  @date   23/01/25
+     *  @param outputTensor super resolutioned image
+     */
     private Bitmap tensorToImage(TensorImage outputTensor) {
         ByteBuffer srOut = outputTensor.getBuffer();
         srOut.rewind();
@@ -263,6 +318,9 @@ public class MainActivity extends AppCompatActivity {
         img_hr.setImageBitmap(bitmap_sr);
     }
 
+    /** @brief  Load .tflite model file to ByteBuffer
+     *  @date   23/01/25
+     */
     private ByteBuffer loadModelFile() throws IOException {
         AssetFileDescriptor assetFileDescriptor = getAssets().openFd(MODEL_NAME);
         FileInputStream fileInputStream = new FileInputStream(assetFileDescriptor.getFileDescriptor());
