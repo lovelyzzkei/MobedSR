@@ -2,8 +2,6 @@ package com.example.mobedsr;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -19,31 +17,19 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.example.mobedsr.databinding.ActivityMainBinding;
 
-import org.tensorflow.lite.DataType;
-import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.Tensor;
-import org.tensorflow.lite.gpu.CompatibilityList;
-import org.tensorflow.lite.gpu.GpuDelegate;
-import org.tensorflow.lite.support.common.ops.NormalizeOp;
-import org.tensorflow.lite.support.image.ImageProcessor;
 import org.tensorflow.lite.support.image.TensorImage;
-import org.tensorflow.lite.support.image.ops.ResizeOp;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,8 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap bitmap_sr;
 
     private final String TAG = "MobedSR";
-    private final String MODEL_NAME = "evsrnet_x4.tflite";
-//    private final String MODEL_NAME = "esrgan.tflite";
+    private boolean useGpu = false;
 
     // View variables
     private View decorView;
@@ -95,9 +80,11 @@ public class MainActivity extends AppCompatActivity {
         // switch listener
         switch_gpu.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
+                useGpu = true;
                 text_gpu.setText("Enable GPU");
             }
             else {
+                useGpu = false;
                 text_gpu.setText("Disable GPU");
             }
         });
@@ -219,65 +206,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /** @brief  Prepare the input tensor from low resolution image
-     *  @date   23/01/25
-     */
-    private TensorImage prepareInputTensor() {
-        TensorImage inputImage = TensorImage.fromBitmap(bitmap_lr);
-        height = bitmap_lr.getHeight();
-        width = bitmap_lr.getWidth();
-
-        ImageProcessor imageProcessor = new ImageProcessor.Builder()
-                .add(new ResizeOp(height, width, ResizeOp.ResizeMethod.NEAREST_NEIGHBOR))
-                .add(new NormalizeOp(0.0f, 255.0f))
-                .build();
-        inputImage = imageProcessor.process(inputImage);
-
-        return inputImage;
-    }
-
-
-    /** @brief  Prepare the output tensor for super resolution
-     *  @date   23/01/25
-     */
-    private TensorImage prepareOutputTensor() {
-        TensorImage srImage = new TensorImage(DataType.FLOAT32);
-        int[] srShape = new int[]{1080, 1920, 3};
-        srImage.load(TensorBuffer.createFixedSize(srShape, DataType.FLOAT32));
-
-        return srImage;
-    }
-
-
-    /** @brief  Convert tensor to bitmap image
-     *  @date   23/01/25
-     *  @param outputTensor super resolutioned image
-     */
-    private Bitmap tensorToImage(TensorImage outputTensor) {
-        ByteBuffer srOut = outputTensor.getBuffer();
-        srOut.rewind();
-
-        int height = outputTensor.getHeight();
-        int width = outputTensor.getWidth();
-
-        Bitmap bmpImage = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        int[] pixels = new int[width * height];
-
-        for (int i = 0; i < width * height; i++) {
-            int a = 0xFF;
-            float r = srOut.getFloat() * 255.0f;
-            float g = srOut.getFloat() * 255.0f;
-            float b = srOut.getFloat() * 255.0f;
-
-            pixels[i] = a << 24 | ((int) r << 16) | ((int) g << 8) | ((int) b);
-        }
-
-        bmpImage.setPixels(pixels, 0, width, 0, 0, width, height);
-
-        return bmpImage;
-    }
-
-
     /** @brief  Run Super Resolution
      *  @date   23/01/25
      */
@@ -286,51 +214,40 @@ public class MainActivity extends AppCompatActivity {
         BitmapDrawable drawable = (BitmapDrawable) img_lr.getDrawable();
         bitmap_lr = drawable.getBitmap();
 
+        SRModel srModel = new SRModel(getAssets(), useGpu);
+
         // Prepare image by TensorImage
-        TensorImage inputTensor = prepareInputTensor();
-        TensorImage outputTensor = prepareOutputTensor();
+        TensorImage inputTensor = srModel.prepareInputTensor(bitmap_lr);
+        TensorImage outputTensor = srModel.prepareOutputTensor();
 
-        // Set GPU delegate
-        CompatibilityList compatList = new CompatibilityList();
-        GpuDelegate.Options delegateOptions = compatList.getBestOptionsForThisDevice();
-        GpuDelegate gpuDelegate = new GpuDelegate(delegateOptions);
+//        // Set GPU delegate
+//        CompatibilityList compatList = new CompatibilityList();
+//        GpuDelegate.Options delegateOptions = compatList.getBestOptionsForThisDevice();
+//        GpuDelegate gpuDelegate = new GpuDelegate(delegateOptions);
+//
+//        // Create the interpreter
+//        Interpreter.Options options = new Interpreter.Options();
+//        options.addDelegate(gpuDelegate);
+//        Interpreter interpreter = new Interpreter(loadModelFile(), options);
 
-
-        // Create the interpreter
-        Interpreter.Options options = new Interpreter.Options();
-        options.addDelegate(gpuDelegate);
-        Interpreter interpreter = new Interpreter(loadModelFile(), options);
 
         // Debug: Get input size
-        Tensor input = interpreter.getInputTensor(0);
-        int[] inputShape = input.shape();
-        Log.d(TAG, String.format("input shape %d %d", width, height));
+        // Tensor input = interpreter.getInputTensor(0);
+        // int[] inputShape = input.shape();
+        // Log.d(TAG, String.format("input shape %d %d", width, height));
 
         // Run the interpreter
         long startTime = System.currentTimeMillis();
-        interpreter.run(inputTensor.getBuffer(), outputTensor.getBuffer());
+        srModel.run(inputTensor.getBuffer(), outputTensor.getBuffer());
 
         text_time.setText(String.format("Spent time: %dms", (System.currentTimeMillis()-startTime)));
         text_sr.setVisibility(View.GONE);
 
         // Show the result
-        bitmap_sr = tensorToImage(outputTensor);
+        bitmap_sr = srModel.tensorToImage(outputTensor);
         img_hr.setImageBitmap(bitmap_sr);
     }
 
-    /** @brief  Load .tflite model file to ByteBuffer
-     *  @date   23/01/25
-     */
-    private ByteBuffer loadModelFile() throws IOException {
-        AssetFileDescriptor assetFileDescriptor = getAssets().openFd(MODEL_NAME);
-        FileInputStream fileInputStream = new FileInputStream(assetFileDescriptor.getFileDescriptor());
-
-        FileChannel fileChannel = fileInputStream.getChannel();
-        long startOffset = assetFileDescriptor.getStartOffset();
-        long declaredLength = assetFileDescriptor.getDeclaredLength();
-
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-    }
 
 
     /**
